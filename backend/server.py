@@ -224,13 +224,14 @@ async def update_lab_complaint_status(
         {"$set": {"status": status_update.status}}
     )
     
-    email_service.send_status_update_email(
+    email_sent = email_service.send_status_update_email(
         to_email=complaint["email"],
         complaint_type="Lab",
         student_name=complaint["name"],
         status=status_update.status,
         complaint_id=complaint_id
     )
+    print(f"Email notification for {complaint_id}: {'Success' if email_sent else 'Failed'}")
     
     return {"message": "Status updated successfully"}
 
@@ -301,3 +302,7 @@ app.add_middleware(
 )
 
 
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)

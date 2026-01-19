@@ -1,4 +1,4 @@
-import "./App.css";
+import "./App.css"; // Trigger recompile
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
 import LandingPage from "./pages/LandingPage";

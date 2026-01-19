@@ -41,10 +41,20 @@ class EmailService:
         return self._send_email(to_email, subject, body)
     
     def _send_email(self, to_email: str, subject: str, body: str):
-        if not all([self.smtp_user, self.smtp_password, self.from_email]):
-            logger.warning("Email credentials not configured. Email not sent.")
+        # Debugging: Check credentials
+        missing_creds = []
+        if not self.smtp_user: missing_creds.append("SMTP_USER")
+        if not self.smtp_password: missing_creds.append("SMTP_PASSWORD")
+        if not self.from_email: missing_creds.append("EMAILS_FROM_EMAIL")
+        
+        if missing_creds:
+            error_msg = f"Email credentials not configured. Missing: {', '.join(missing_creds)}. Email not sent."
+            logger.warning(error_msg)
+            print(f"ERROR: {error_msg}") # Print to visible console
             return False
         
+        print(f"Attempting to send email to {to_email} via {self.smtp_host}:{self.smtp_port}...")
+
         msg = MIMEMultipart()
         msg['Subject'] = subject
         msg['From'] = f"{self.from_name} <{self.from_email}>"
@@ -53,13 +63,19 @@ class EmailService:
         msg.attach(MIMEText(body, 'html'))
         
         try:
+            # Create a secure SSL context if needed, but SMTP_SSL handles it by default
             with smtplib.SMTP_SSL(self.smtp_host, self.smtp_port) as server:
                 server.login(self.smtp_user, self.smtp_password)
                 server.sendmail(self.from_email, to_email, msg.as_string())
-            logger.info(f"Email sent successfully to {to_email}")
+            
+            success_msg = f"Email sent successfully to {to_email}"
+            logger.info(success_msg)
+            print(f"SUCCESS: {success_msg}")
             return True
         except Exception as e:
-            logger.error(f"Failed to send email to {to_email}: {str(e)}")
+            error_msg = f"Failed to send email to {to_email}. Error: {str(e)}"
+            logger.error(error_msg)
+            print(f"ERROR: {error_msg}")
             return False
 
 email_service = EmailService()
