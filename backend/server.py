@@ -100,6 +100,12 @@ async def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(
     
     return admin
 
+async def get_current_lab_admin(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    return await get_current_admin(credentials, "lab")
+
+async def get_current_icc_admin(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    return await get_current_admin(credentials, "icc")
+
 # Lab Admin Routes
 @api_router.post("/auth/lab-admin/signup")
 async def lab_admin_signup(admin: AdminSignup):
