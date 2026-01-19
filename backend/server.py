@@ -1,72 +1,283 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
-
+from auth_utils import hash_password, verify_password, create_access_token, decode_access_token
+from email_service import email_service
+import base64
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app without a prefix
 app = FastAPI()
-
-# Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+security = HTTPBearer()
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
+# Models
+class AdminSignup(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
+
+class AdminLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class LabComplaintCreate(BaseModel):
+    name: str
+    roll_number: str
+    stream: str
+    phone: str
+    email: EmailStr
+    lab_number: str
+    complaint: str
+    photo_base64: Optional[str] = None
+
+class ICCComplaintCreate(BaseModel):
+    name: str
+    roll_number: str
+    stream: str
+    phone: str
+    email: EmailStr
+    complaint: str
+
+class StatusUpdate(BaseModel):
+    status: str
+
+class Complaint(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    name: str
+    roll_number: str
+    stream: str
+    phone: str
+    email: EmailStr
+    complaint: str
+    status: str
+    created_at: datetime
+    lab_number: Optional[str] = None
+    photo_base64: Optional[str] = None
+
+class Admin(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    email: EmailStr
+    name: str
+
+# Auth dependency
+async def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(security), admin_type: str = "lab"):
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
     
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-class StatusCheckCreate(BaseModel):
-    client_name: str
-
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
+    admin_id = payload.get("sub")
+    admin_type_from_token = payload.get("type")
     
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
+    if admin_type_from_token != admin_type:
+        raise HTTPException(status_code=403, detail="Access denied")
     
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
+    collection = db.lab_admins if admin_type == "lab" else db.icc_admins
+    admin = await collection.find_one({"id": admin_id}, {"_id": 0})
+    
+    if not admin:
+        raise HTTPException(status_code=401, detail="Admin not found")
+    
+    return admin
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
+# Lab Admin Routes
+@api_router.post("/auth/lab-admin/signup")
+async def lab_admin_signup(admin: AdminSignup):
+    existing = await db.lab_admins.find_one({"email": admin.email}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
+    admin_id = str(uuid.uuid4())
+    hashed_pwd = hash_password(admin.password)
     
-    return status_checks
+    admin_doc = {
+        "id": admin_id,
+        "email": admin.email,
+        "password": hashed_pwd,
+        "name": admin.name,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.lab_admins.insert_one(admin_doc)
+    
+    token = create_access_token({"sub": admin_id, "type": "lab"})
+    return {"token": token, "admin": {"id": admin_id, "email": admin.email, "name": admin.name}}
 
-# Include the router in the main app
+@api_router.post("/auth/lab-admin/login")
+async def lab_admin_login(credentials: AdminLogin):
+    admin = await db.lab_admins.find_one({"email": credentials.email}, {"_id": 0})
+    if not admin or not verify_password(credentials.password, admin["password"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    token = create_access_token({"sub": admin["id"], "type": "lab"})
+    return {"token": token, "admin": {"id": admin["id"], "email": admin["email"], "name": admin["name"]}}
+
+# ICC Admin Routes
+@api_router.post("/auth/icc-admin/signup")
+async def icc_admin_signup(admin: AdminSignup):
+    existing = await db.icc_admins.find_one({"email": admin.email}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    admin_id = str(uuid.uuid4())
+    hashed_pwd = hash_password(admin.password)
+    
+    admin_doc = {
+        "id": admin_id,
+        "email": admin.email,
+        "password": hashed_pwd,
+        "name": admin.name,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.icc_admins.insert_one(admin_doc)
+    
+    token = create_access_token({"sub": admin_id, "type": "icc"})
+    return {"token": token, "admin": {"id": admin_id, "email": admin.email, "name": admin.name}}
+
+@api_router.post("/auth/icc-admin/login")
+async def icc_admin_login(credentials: AdminLogin):
+    admin = await db.icc_admins.find_one({"email": credentials.email}, {"_id": 0})
+    if not admin or not verify_password(credentials.password, admin["password"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    token = create_access_token({"sub": admin["id"], "type": "icc"})
+    return {"token": token, "admin": {"id": admin["id"], "email": admin["email"], "name": admin["name"]}}
+
+# Lab Complaint Routes
+@api_router.post("/lab-complaints")
+async def create_lab_complaint(complaint: LabComplaintCreate):
+    complaint_id = str(uuid.uuid4())
+    
+    complaint_doc = {
+        "id": complaint_id,
+        "name": complaint.name,
+        "roll_number": complaint.roll_number,
+        "stream": complaint.stream,
+        "phone": complaint.phone,
+        "email": complaint.email,
+        "lab_number": complaint.lab_number,
+        "complaint": complaint.complaint,
+        "photo_base64": complaint.photo_base64,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.lab_complaints.insert_one(complaint_doc)
+    
+    return {"message": "Complaint submitted successfully", "complaint_id": complaint_id}
+
+@api_router.get("/lab-complaints", response_model=List[Complaint])
+async def get_lab_complaints(admin: dict = Depends(lambda creds: get_current_admin(creds, "lab"))):
+    complaints = await db.lab_complaints.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    
+    for c in complaints:
+        if isinstance(c.get('created_at'), str):
+            c['created_at'] = datetime.fromisoformat(c['created_at'])
+    
+    return complaints
+
+@api_router.patch("/lab-complaints/{complaint_id}/status")
+async def update_lab_complaint_status(
+    complaint_id: str,
+    status_update: StatusUpdate,
+    admin: dict = Depends(lambda creds: get_current_admin(creds, "lab"))
+):
+    complaint = await db.lab_complaints.find_one({"id": complaint_id}, {"_id": 0})
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    await db.lab_complaints.update_one(
+        {"id": complaint_id},
+        {"$set": {"status": status_update.status}}
+    )
+    
+    email_service.send_status_update_email(
+        to_email=complaint["email"],
+        complaint_type="Lab",
+        student_name=complaint["name"],
+        status=status_update.status,
+        complaint_id=complaint_id
+    )
+    
+    return {"message": "Status updated successfully"}
+
+# ICC Complaint Routes
+@api_router.post("/icc-complaints")
+async def create_icc_complaint(complaint: ICCComplaintCreate):
+    complaint_id = str(uuid.uuid4())
+    
+    complaint_doc = {
+        "id": complaint_id,
+        "name": complaint.name,
+        "roll_number": complaint.roll_number,
+        "stream": complaint.stream,
+        "phone": complaint.phone,
+        "email": complaint.email,
+        "complaint": complaint.complaint,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.icc_complaints.insert_one(complaint_doc)
+    
+    return {"message": "Complaint submitted successfully", "complaint_id": complaint_id}
+
+@api_router.get("/icc-complaints", response_model=List[Complaint])
+async def get_icc_complaints(admin: dict = Depends(lambda creds: get_current_admin(creds, "icc"))):
+    complaints = await db.icc_complaints.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    
+    for c in complaints:
+        if isinstance(c.get('created_at'), str):
+            c['created_at'] = datetime.fromisoformat(c['created_at'])
+    
+    return complaints
+
+@api_router.patch("/icc-complaints/{complaint_id}/status")
+async def update_icc_complaint_status(
+    complaint_id: str,
+    status_update: StatusUpdate,
+    admin: dict = Depends(lambda creds: get_current_admin(creds, "icc"))
+):
+    complaint = await db.icc_complaints.find_one({"id": complaint_id}, {"_id": 0})
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    await db.icc_complaints.update_one(
+        {"id": complaint_id},
+        {"$set": {"status": status_update.status}}
+    )
+    
+    email_service.send_status_update_email(
+        to_email=complaint["email"],
+        complaint_type="ICC",
+        student_name=complaint["name"],
+        status=status_update.status,
+        complaint_id=complaint_id
+    )
+    
+    return {"message": "Status updated successfully"}
+
 app.include_router(api_router)
 
 app.add_middleware(
@@ -76,13 +287,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
