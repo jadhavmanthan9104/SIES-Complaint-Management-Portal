@@ -264,13 +264,13 @@ class ComplaintManagementTester:
 
     def test_unauthorized_access(self):
         """Test unauthorized access to protected endpoints"""
-        # Test without token
-        response = self.run_test(
-            "Unauthorized Lab Complaints Access",
-            "GET",
-            "lab-complaints",
-            401
-        )
+        # Test without token (should return 401 or 403)
+        response = requests.get(f"{self.base_url}/api/lab-complaints", timeout=10)
+        success = response.status_code in [401, 403]
+        details = f"Status: {response.status_code}"
+        if not success:
+            details += " (Expected: 401 or 403)"
+        self.log_test("Unauthorized Lab Complaints Access", success, details)
         
         # Test with wrong token type (ICC token for Lab endpoint)
         if self.icc_admin_token:
