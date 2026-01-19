@@ -1,0 +1,189 @@
+{
+  "identity": {
+    "name": "E1: The Anti-AI Designer",
+    "tone": "Academic Precision",
+    "core_principles": [
+      "Fusion over Imitation: Mix Institutional Authority with SaaS Efficiency.",
+      "Emotion First: Reduce anxiety for complainants; empower admins.",
+      "Content is King: Clear instructions, no jargon.",
+      "Negative Space: High density for dashboards, high breathing room for forms."
+    ]
+  },
+  "typography": {
+    "font_family": {
+      "headings": "Manrope, sans-serif",
+      "body": "Inter, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "scale": {
+      "h1": "text-4xl md:text-5xl font-bold tracking-tight",
+      "h2": "text-3xl font-semibold tracking-tight",
+      "h3": "text-2xl font-medium",
+      "body": "text-base leading-relaxed text-slate-600",
+      "small": "text-sm font-medium text-slate-500"
+    },
+    "imports": [
+      "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap');"
+    ]
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "DEFAULT": "#0F172A",
+        "foreground": "#F8FAFC",
+        "description": "Deep Navy / Slate 900 - The anchor of authority."
+      },
+      "brand": {
+        "DEFAULT": "#2563EB",
+        "hover": "#1D4ED8",
+        "light": "#EFF6FF",
+        "description": "Royal Blue - For primary actions and active states."
+      },
+      "background": {
+        "DEFAULT": "#FFFFFF",
+        "subtle": "#F8FAFC",
+        "dark": "#020617"
+      },
+      "surface": {
+        "DEFAULT": "#FFFFFF",
+        "border": "#E2E8F0"
+      },
+      "status": {
+        "success": "#10B981",
+        "warning": "#F59E0B",
+        "error": "#EF4444",
+        "info": "#3B82F6"
+      }
+    },
+    "css_variables": {
+      "root": {
+        "--background": "0 0% 100%",
+        "--foreground": "222.2 84% 4.9%",
+        "--card": "0 0% 100%",
+        "--card-foreground": "222.2 84% 4.9%",
+        "--popover": "0 0% 100%",
+        "--popover-foreground": "222.2 84% 4.9%",
+        "--primary": "222.2 47.4% 11.2%",
+        "--primary-foreground": "210 40% 98%",
+        "--secondary": "210 40% 96.1%",
+        "--secondary-foreground": "222.2 47.4% 11.2%",
+        "--muted": "210 40% 96.1%",
+        "--muted-foreground": "215.4 16.3% 46.9%",
+        "--accent": "210 40% 96.1%",
+        "--accent-foreground": "222.2 47.4% 11.2%",
+        "--destructive": "0 84.2% 60.2%",
+        "--destructive-foreground": "210 40% 98%",
+        "--border": "214.3 31.8% 91.4%",
+        "--input": "214.3 31.8% 91.4%",
+        "--ring": "221.2 83.2% 53.3%",
+        "--radius": "0.3rem"
+      },
+      "dark": {
+        "--background": "222.2 84% 4.9%",
+        "--foreground": "210 40% 98%",
+        "--card": "222.2 84% 4.9%",
+        "--card-foreground": "210 40% 98%",
+        "--popover": "222.2 84% 4.9%",
+        "--popover-foreground": "210 40% 98%",
+        "--primary": "210 40% 98%",
+        "--primary-foreground": "222.2 47.4% 11.2%",
+        "--secondary": "217.2 32.6% 17.5%",
+        "--secondary-foreground": "210 40% 98%",
+        "--muted": "217.2 32.6% 17.5%",
+        "--muted-foreground": "215 20.2% 65.1%",
+        "--accent": "217.2 32.6% 17.5%",
+        "--accent-foreground": "210 40% 98%",
+        "--destructive": "0 62.8% 30.6%",
+        "--destructive-foreground": "210 40% 98%",
+        "--border": "217.2 32.6% 17.5%",
+        "--input": "217.2 32.6% 17.5%",
+        "--ring": "212.7 26.8% 83.9%"
+      }
+    }
+  },
+  "layout_strategies": {
+    "landing_page": {
+      "structure": "Split Screen or Bento Grid",
+      "description": "Left: Immersive architectural imagery with blue overlay. Right: Clean, high-contrast typography with two distinct entry points (Lab vs ICC).",
+      "components": [
+        "Hero Section with Split Choice",
+        "Minimal Footer"
+      ]
+    },
+    "forms": {
+      "structure": "Centered Single Column",
+      "description": "Distraction-free. White card on subtle grey background. Progress indicators if multi-step (though single step is preferred for speed).",
+      "spacing": "p-8 md:p-12",
+      "width": "max-w-2xl mx-auto"
+    },
+    "dashboard": {
+      "structure": "Sidebar Navigation + Dense Data Grid",
+      "description": "Fixed sidebar (Dark Blue). Main content area (White/Grey). Top bar for user profile and quick actions.",
+      "grid_mode": "Mode B (High Density)",
+      "card_style": "Flat, 1px border, no shadow."
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-slate-900 text-white hover:bg-blue-700 rounded-md px-6 py-2.5 font-medium transition-all shadow-sm hover:shadow-md",
+      "secondary": "bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 rounded-md px-6 py-2.5 font-medium transition-all",
+      "ghost": "text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md px-4 py-2"
+    },
+    "inputs": {
+      "default": "bg-white border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-md h-11 px-4 text-slate-900 placeholder:text-slate-400 transition-all"
+    },
+    "cards": {
+      "default": "bg-white border border-slate-200 rounded-lg p-6 hover:border-blue-200 transition-colors"
+    },
+    "status_badges": {
+      "pending": "bg-yellow-50 text-yellow-700 border border-yellow-200 px-2.5 py-0.5 rounded-full text-xs font-medium",
+      "in_progress": "bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full text-xs font-medium",
+      "resolved": "bg-green-50 text-green-700 border border-green-200 px-2.5 py-0.5 rounded-full text-xs font-medium"
+    }
+  },
+  "assets": {
+    "images": {
+      "landing_hero": {
+        "url": "https://images.unsplash.com/photo-1741766936431-406804fc36c8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODd8MHwxfHNlYXJjaHw0fHxtb2Rlcm4lMjB1bml2ZXJzaXR5JTIwY2FtcHVzJTIwYXJjaGl0ZWN0dXJlJTIwYWJzdHJhY3R8ZW58MHx8fHwxNzY4Nzk5NTk4fDA&ixlib=rb-4.1.0&q=85",
+        "alt": "Modern institutional architecture abstract",
+        "usage": "Landing page split screen background or hero image"
+      },
+      "student_life": {
+        "url": "https://images.unsplash.com/photo-1749374465065-fb3ae4ddc368?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2MzR8MHwxfHNlYXJjaHwxfHxzdHVkZW50cyUyMGNvbGxhYm9yYXRpbmclMjBsaWJyYXJ5fGVufDB8fHx8MTc2ODc5OTYwMXww&ixlib=rb-4.1.0&q=85",
+        "alt": "Students in library",
+        "usage": "Student login/form section background"
+      },
+      "admin_context": {
+        "url": "https://images.unsplash.com/photo-1758413149188-4ce9c737ed3f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjB1bml2ZXJzaXR5JTIwY2FtcHVzJTIwYXJjaGl0ZWN0dXJlJTIwYWJzdHJhY3R8ZW58MHx8fHwxNzY4Nzk5NTk4fDA&ixlib=rb-4.1.0&q=85",
+        "alt": "Classical university building",
+        "usage": "Admin login background"
+      }
+    },
+    "icons": {
+      "library": "lucide-react/FlaskConical",
+      "icc": "lucide-react/Scale",
+      "student": "lucide-react/GraduationCap",
+      "admin": "lucide-react/ShieldCheck",
+      "dashboard": "lucide-react/LayoutDashboard",
+      "logout": "lucide-react/LogOut",
+      "status": "lucide-react/Activity"
+    }
+  },
+  "instructions_to_main_agent": [
+    "1. UPDATE CSS VARIABLES: Replace the content of `/app/frontend/src/index.css` with the variables provided in `colors.css_variables`. This is CRITICAL for the Blue/White theme.",
+    "2. INSTALL FONTS: Add the Google Fonts import to `index.css`.",
+    "3. SHADCN CUSTOMIZATION: When using Shadcn components, override the default `radius` to `0.3rem` (approx 5px) for a cleaner, more professional look.",
+    "4. LANDING PAGE: Create a split-screen layout. Left side is the 'Modern institutional architecture' image with a blue overlay (bg-slate-900/80). Right side contains the 'Lab Complaint' and 'ICC Complaint' large cards.",
+    "5. FORMS: Use `react-hook-form` + `zod` for validation. Wrap forms in a `Card` component with `max-w-2xl mx-auto`.",
+    "6. DASHBOARD: Create a `DashboardLayout` component that includes a Sidebar (dark blue) and a Topbar. The content area should be `bg-slate-50`.",
+    "7. NOTIFICATIONS: Use `sonner` for toast notifications on form submission and status updates.",
+    "8. ACCESSIBILITY: Ensure all text has sufficient contrast. The primary blue (#2563EB) on white is safe. Avoid light grey text on white backgrounds."
+  ],
+  "universal_guidelines": [
+    "Do not use gradients for backgrounds. Use solid colors or subtle textures.",
+    "Use 'Manrope' for all headings (h1-h3) and 'Inter' for body text.",
+    "All interactive elements must have a `data-testid`.",
+    "Use `lucide-react` for icons.",
+    "Ensure mobile responsiveness. Stack columns on mobile."
+  ]
+}
