@@ -16,7 +16,9 @@ import SiesLogo from "../components/SiesLogo";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const schema = z.object({
-  email: z.string().email("Valid email required"),
+  email: z.string().email("Valid email required").refine((val) => val.endsWith("@sies.edu.in"), {
+    message: "Enter valid admin email address",
+  }),
   password: z.string().min(6, "Password must be at least 6 characters"),
   name: z.string().min(1, "Name is required").optional(),
 });
@@ -57,12 +59,18 @@ const AdminAuth = ({ type }) => {
 
       const response = await axios.post(url, payload);
 
-      localStorage.setItem(`${type}_admin_token`, response.data.token);
-      localStorage.setItem(`${type}_admin_data`, JSON.stringify(response.data.admin));
+      if (activeTab === "login") {
+        localStorage.setItem(`${type}_admin_token`, response.data.token);
+        localStorage.setItem(`${type}_admin_data`, JSON.stringify(response.data.admin));
 
-      toast.success(`${activeTab === "login" ? "Login" : "Signup"} successful!`);
-      reset();
-      navigate(`/${type}/admin/dashboard`);
+        toast.success("Login successful!");
+        reset();
+        navigate(`/${type}/admin/dashboard`);
+      } else {
+        toast.success("Signup successful! Please login to continue.");
+        reset();
+        setActiveTab("login");
+      }
     } catch (error) {
       toast.error(error.response?.data?.detail || `${activeTab} failed`);
     } finally {

@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import { LogOut, LayoutDashboard, Monitor } from "lucide-react";
+import { LogOut, LayoutDashboard, Monitor, Trash2 } from "lucide-react";
 import axios from "axios";
 import SiesLogo from "../components/SiesLogo";
 
@@ -56,6 +56,22 @@ const LabAdminDashboard = () => {
       fetchComplaints();
     } catch (error) {
       toast.error("Failed to update status");
+    }
+  };
+
+  const handleDelete = async (complaintId) => {
+    if (!window.confirm("Are you sure you want to delete this complaint? This action cannot be undone.")) {
+      return;
+    }
+    try {
+      const token = localStorage.getItem("lab_admin_token");
+      await axios.delete(`${BACKEND_URL}/api/lab-complaints/${complaintId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Complaint deleted successfully");
+      fetchComplaints();
+    } catch (error) {
+      toast.error("Failed to delete complaint");
     }
   };
 
@@ -224,6 +240,15 @@ const LabAdminDashboard = () => {
                   </div>
 
                   <div className="flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-end">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(complaint.id)}
+                      className="h-9 px-3 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Clear
+                    </Button>
                     <span className="text-sm text-slate-500 dark:text-slate-400 hidden sm:inline">Update:</span>
                     <Select
                       value={complaint.status}

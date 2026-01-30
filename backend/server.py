@@ -6,7 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
@@ -40,9 +40,23 @@ class AdminSignup(BaseModel):
     password: str
     name: str
 
+    @field_validator('email')
+    @classmethod
+    def validate_email_domain(cls, v: str) -> str:
+        if not v.endswith('@sies.edu.in'):
+            raise ValueError('Enter valid admin email address')
+        return v
+
 class AdminLogin(BaseModel):
     email: EmailStr
     password: str
+
+    @field_validator('email')
+    @classmethod
+    def validate_email_domain(cls, v: str) -> str:
+        if not v.endswith('@sies.edu.in'):
+            raise ValueError('Email must end with @sies.edu.in')
+        return v
 
 class LabComplaintCreate(BaseModel):
     name: str
@@ -235,6 +249,17 @@ async def update_lab_complaint_status(
     
     return {"message": "Status updated successfully"}
 
+@api_router.delete("/lab-complaints/{complaint_id}")
+async def delete_lab_complaint(
+    complaint_id: str,
+    admin: dict = Depends(get_current_lab_admin)
+):
+    result = await db.lab_complaints.delete_one({"id": complaint_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    return {"message": "Complaint deleted successfully"}
+
 # ICC Complaint Routes
 @api_router.post("/icc-complaints")
 async def create_icc_complaint(complaint: ICCComplaintCreate):
@@ -290,6 +315,17 @@ async def update_icc_complaint_status(
     )
     
     return {"message": "Status updated successfully"}
+
+@api_router.delete("/icc-complaints/{complaint_id}")
+async def delete_icc_complaint(
+    complaint_id: str,
+    admin: dict = Depends(get_current_icc_admin)
+):
+    result = await db.icc_complaints.delete_one({"id": complaint_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    return {"message": "Complaint deleted successfully"}
 
 app.include_router(api_router)
 
